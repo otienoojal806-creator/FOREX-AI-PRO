@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html, body, #root { height: 100%; }
+body { @apply bg-ink-950 text-slate-200 antialiased; }
+
+@layer components {
+  .card { @apply rounded-xl border border-ink-600/60 bg-ink-800/80 p-5 shadow-lg shadow-black/20; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-accent text-white hover:bg-blue-500; }
+  .btn-buy { @apply btn bg-buy text-ink-950 hover:brightness-110; }
+  .btn-sell { @apply btn bg-sell text-white hover:brightness-110; }
+  .btn-ghost { @apply btn border border-ink-600 bg-transparent text-slate-300 hover:bg-ink-700; }
+  .input { @apply w-full rounded-lg border border-ink-600 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent focus:outline-none; }
+  .label { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400; }
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .th { @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400; }
+  .td { @apply px-4 py-3 text-sm text-slate-200; }
+}

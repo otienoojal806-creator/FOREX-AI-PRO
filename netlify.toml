@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # The Supabase publishable key is public by design and ships in the browser bundle.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY"
+
+# Single-page app: send every path to index.html so /billing, /admin etc. work on refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
