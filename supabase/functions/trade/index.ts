@@ -72,6 +72,15 @@ async function meta(b: Broker, path: string, init?: { method?: string; body?: un
   return data
 }
 
+// Live orders and stops must be priced from the BROKER's own quote, not a third-party feed:
+// feeds differ from broker prices by spread/latency, which can make SL/TP invalid or misplaced.
+async function brokerPrice(b: Broker, symbol: string, dir: 'BUY' | 'SELL'): Promise<number> {
+  const q = await meta(b, `/symbols/${encodeURIComponent(symbol.replace('/', ''))}/current-price`)
+  const p = Number(dir === 'BUY' ? q?.ask : q?.bid)
+  if (!p) throw new HttpError(502, 'Broker price unavailable for this symbol')
+  return p
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
@@ -119,6 +128,11 @@ Deno.serve(async (req) => {
       return json({ ok: true, balance: info.balance, currency: info.currency, leverage: info.leverage })
     }
     if (action === 'disconnect_broker') {
+      // Without credentials the app can no longer manage or close live positions, so refuse
+      // while any are open. (Broker-side SL/TP stay active either way.)
+      const { count: liveOpen } = await db.from('trades').select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).eq('mode', 'live').in('status', ['open', 'pending'])
+      if ((liveOpen ?? 0) > 0) throw new HttpError(400, 'Close your open live trades before disconnecting the broker')
       await db.from('broker_credentials').delete().eq('user_id', user.id)
       await db.from('automation_settings').update({ broker_connected: false, mode: 'simulated', auto_enabled: false }).eq('user_id', user.id)
       await db.from('audit_logs').insert({ actor_id: user.id, action: 'broker.disconnect', entity: 'broker_credentials', entity_id: user.id, details: {} })
@@ -142,10 +156,9 @@ Deno.serve(async (req) => {
       if (direction !== 'BUY' && direction !== 'SELL') throw new HttpError(400, 'Direction must be BUY or SELL')
       const s = await loadSettings()
 
-      const { count } = await db.from('trades').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'open')
-      if ((count ?? 0) >= s.max_open_trades) throw new HttpError(400, `Maximum open trades reached (${s.max_open_trades})`)
-      const { count: same } = await db.from('trades').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'open').eq('symbol', symbol)
-      if ((same ?? 0) > 0) throw new HttpError(400, `A ${symbol} trade is already open`)
+      // Clear reservations left behind by a crashed request (older than 2 minutes).
+      await db.from('trades').delete().eq('user_id', user.id).eq('status', 'pending')
+        .lt('opened_at', new Date(Date.now() - 2 * 60 * 1000).toISOString())
 
       const live = s.mode === 'live'
       let broker: Broker | null = null
@@ -156,7 +169,7 @@ Deno.serve(async (req) => {
         broker = await loadBroker()
       }
 
-      const price = await getPrice(symbol)
+      const price = live ? await brokerPrice(broker!, symbol, direction) : await getPrice(symbol)
       const sgn = direction === 'BUY' ? 1 : -1
       const d = digits(symbol)
       const sl = rnd(price - sgn * s.sl_pips * pipSize(symbol), d)
@@ -169,21 +182,51 @@ Deno.serve(async (req) => {
         throw new HttpError(400, `Trade rejected by risk limit: worst case $${riskUsd.toFixed(2)} exceeds ${s.risk_pct}% of balance ($${(balance * Number(s.risk_pct) / 100).toFixed(2)}). Reduce lot size or stop-loss.`)
       }
 
-      let positionId: string | null = null
-      if (live) {
-        const res = await meta(broker!, '/trade', {
-          method: 'POST',
-          body: { actionType: direction === 'BUY' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_SELL', symbol: symbol.replace('/', ''), volume: Number(s.lot_size), stopLoss: sl, takeProfit: tp, comment: 'ForexAI Pro' },
-        })
-        positionId = String(res.positionId ?? res.orderId ?? '')
-        if (!positionId) throw new HttpError(502, 'Broker did not confirm the order')
+      // Reserve the slot BEFORE touching the broker. A unique index allows only one pending/open
+      // trade per user+symbol, so two simultaneous requests (e.g. two open tabs) cannot both place
+      // a live order. The broker order is only sent once the reservation succeeds.
+      const { data: reserved, error: resErr } = await db.from('trades').insert({
+        user_id: user.id, mode: s.mode, symbol, direction, lots: s.lot_size, entry_price: price, sl, tp,
+        trailing_pips: s.trailing_pips, signal_id: opts.signalId, status: live ? 'pending' : 'open',
+      }).select('*').single()
+      if (resErr) {
+        if (resErr.code === '23505') throw new HttpError(400, `A ${symbol} trade is already open`)
+        throw new HttpError(500, resErr.message)
       }
 
-      const { data: trade, error } = await db.from('trades').insert({
-        user_id: user.id, mode: s.mode, symbol, direction, lots: s.lot_size, entry_price: price, sl, tp,
-        trailing_pips: s.trailing_pips, broker_position_id: positionId, signal_id: opts.signalId,
-      }).select('*').single()
-      if (error) throw new HttpError(500, error.message)
+      // Enforce the open-trade cap including this reservation (race-safe: count after inserting).
+      const { count } = await db.from('trades').select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).in('status', ['open', 'pending'])
+      if ((count ?? 0) > s.max_open_trades) {
+        await db.from('trades').delete().eq('id', reserved.id)
+        throw new HttpError(400, `Maximum open trades reached (${s.max_open_trades})`)
+      }
+
+      let trade = reserved
+      if (live) {
+        let positionId = ''
+        try {
+          const res = await meta(broker!, '/trade', {
+            method: 'POST',
+            body: { actionType: direction === 'BUY' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_SELL', symbol: symbol.replace('/', ''), volume: Number(s.lot_size), stopLoss: sl, takeProfit: tp, comment: 'ForexAI Pro' },
+          })
+          positionId = String(res.positionId ?? res.orderId ?? '')
+          if (!positionId) throw new HttpError(502, 'Broker did not confirm the order')
+        } catch (e) {
+          await db.from('trades').delete().eq('id', reserved.id) // nothing was opened, release the slot
+          throw e
+        }
+        const { data: upd, error: updErr } = await db.from('trades')
+          .update({ status: 'open', broker_position_id: positionId }).eq('id', reserved.id).select('*').single()
+        if (updErr || !upd) {
+          // The order exists at the broker but we could not record it: close it rather than leave it untracked.
+          try { await meta(broker!, '/trade', { method: 'POST', body: { actionType: 'POSITION_CLOSE_ID', positionId } }) } catch { /* logged below */ }
+          await db.from('trades').delete().eq('id', reserved.id)
+          await db.from('audit_logs').insert({ actor_id: user.id, action: 'trade.open_live_failed_to_record', entity: 'trades', entity_id: reserved.id, details: { symbol, positionId } })
+          throw new HttpError(500, 'Order could not be recorded and was closed. Check your broker account to confirm.')
+        }
+        trade = upd
+      }
       await db.from('audit_logs').insert({ actor_id: user.id, action: live ? 'trade.open_live' : 'trade.open_sim', entity: 'trades', entity_id: trade.id, details: { symbol, direction, lots: s.lot_size, auto: opts.auto } })
       return trade
     }
@@ -219,8 +262,11 @@ Deno.serve(async (req) => {
       if (!t) throw new HttpError(404, 'Open trade not found')
       let closePrice: number | null = null
       if (t.mode === 'live') {
-        await meta(await loadBroker(), '/trade', { method: 'POST', body: { actionType: 'POSITION_CLOSE_ID', positionId: t.broker_position_id } })
-        closePrice = await getPrice(t.symbol)
+        const broker = await loadBroker()
+        await meta(broker, '/trade', { method: 'POST', body: { actionType: 'POSITION_CLOSE_ID', positionId: t.broker_position_id } })
+        // Estimate from the broker quote (closing a BUY sells at bid, closing a SELL buys at ask).
+        // Your broker statement is the source of truth for realised P&L.
+        closePrice = await brokerPrice(broker, t.symbol, t.direction === 'BUY' ? 'SELL' : 'BUY')
       } else {
         closePrice = await getPrice(t.symbol)
       }
