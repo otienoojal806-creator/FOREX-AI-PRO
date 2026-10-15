@@ -6,7 +6,8 @@ import Dashboard from './pages/Dashboard'
 import Billing from './pages/Billing'
 import Transactions from './pages/Transactions'
 import Account from './pages/Account'
-import ModulePlaceholder from './pages/ModulePlaceholder'
+import AIAnalysis from './pages/AIAnalysis'
+import Automation from './pages/Automation'
 import Admin from './pages/admin/Admin'
 
 export default function App() {
@@ -21,10 +22,10 @@ export default function App() {
           <Route path="transactions" element={<Transactions />} />
           <Route path="settings" element={<Account />} />
           <Route element={<RequireModule module="ai_analysis" />}>
-            <Route path="analysis" element={<ModulePlaceholder module="ai_analysis" />} />
+            <Route path="analysis" element={<AIAnalysis />} />
           </Route>
           <Route element={<RequireModule module="auto_trading" />}>
-            <Route path="automation" element={<ModulePlaceholder module="auto_trading" />} />
+            <Route path="automation" element={<Automation />} />
           </Route>
           <Route element={<RequireAdmin />}>
             <Route path="admin" element={<Admin />} />

@@ -67,3 +67,68 @@ export interface AuditLog {
 export type PaymentSettings = PaymentSetting
 export type Access = ModuleAccess
 export type Submission = PaymentSubmission
+
+// ---- Trading ----
+export const SYMBOLS = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'XAU/USD'] as const
+export const INTERVALS = ['5min', '15min', '30min', '1h', '4h', '1day'] as const
+
+export interface Candle { time: number; open: number; high: number; low: number; close: number }
+
+export interface SignalData {
+  direction: 'BUY' | 'SELL'
+  entry: number
+  tp: number
+  sl: number
+  confidence: number
+  rationale: string[]
+}
+
+export interface AnalysisResult {
+  symbol: string
+  interval: string
+  candles: Candle[]
+  price: number
+  indicators: { ema20: number; ema50: number; rsi14: number; atr14: number; score: number }
+  signal: SignalData | null
+  reason: string | null
+  signalId: string | null
+  note: string
+}
+
+export interface SignalRow extends SignalData { id: string; symbol: string; interval: string; created_at: string }
+
+export interface AutomationSettings {
+  user_id: string
+  mode: TradeMode
+  lot_size: number
+  risk_pct: number
+  sl_pips: number
+  tp_pips: number
+  trailing_pips: number
+  max_open_trades: number
+  min_confidence: number
+  symbols: string[]
+  auto_enabled: boolean
+  live_consent_at: string | null
+  broker_connected: boolean
+  updated_at: string
+}
+
+export interface TradeRow {
+  id: string
+  mode: TradeMode
+  symbol: string
+  direction: 'BUY' | 'SELL'
+  lots: number
+  entry_price: number
+  sl: number
+  tp: number
+  trailing_pips: number
+  status: 'open' | 'closed' | 'pending'
+  close_price: number | null
+  pnl_usd: number | null
+  close_reason: string | null
+  broker_position_id: string | null
+  opened_at: string
+  closed_at: string | null
+}
