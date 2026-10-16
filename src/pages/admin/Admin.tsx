@@ -19,10 +19,10 @@ export default function Admin() {
   return (
     <>
       <PageHeader title="Admin dashboard" subtitle="Verify payments, manage access and configure payment links. Every action is written to the audit log." />
-      <div className="mb-5 flex gap-1 overflow-x-auto rounded-xl bg-ink-900 p-1">
+      <div className="mb-5 flex gap-1 overflow-x-auto rounded-2xl border border-white/[0.07] bg-ink-900/80 p-1">
         {TABS.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold ${tab === t.id ? 'bg-accent text-white' : 'text-slate-400 hover:text-white'}`}>
+            className={`min-h-[44px] whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${tab === t.id ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}>
             {t.label}
           </button>
         ))}

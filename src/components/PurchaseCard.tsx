@@ -87,17 +87,17 @@ export default function PurchaseCard({ module }: { module: ModuleKey }) {
 
   const m = MODULES[module]
   return (
-    <div className="card flex flex-col gap-4">
+    <div className={`card flex flex-col gap-4 ${status === 'active' ? 'card-glow' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-white">{m.title}</h3>
+          <h3 className="text-lg font-bold text-white">{m.title}</h3>
           <p className="mt-1 text-sm text-slate-400">{m.blurb}</p>
         </div>
         <StatusBadge status={status} />
       </div>
 
       <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-white">${price.toFixed(0)}</span>
+        <span className="bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-4xl font-extrabold text-transparent">${price.toFixed(0)}</span>
         <span className="text-sm text-slate-400">one-time payment · permanent access once verified</span>
       </div>
 
@@ -120,13 +120,13 @@ export default function PurchaseCard({ module }: { module: ModuleKey }) {
         </button>
       )}
       {(status === 'none' || status === 'rejected') && !open && (
-        <button className="text-left text-xs text-slate-400 underline" onClick={() => setOpen(true)}>
+        <button className="min-h-[44px] text-left text-sm text-slate-300 underline decoration-slate-500 underline-offset-4" onClick={() => setOpen(true)}>
           Already paid? Submit your transaction ID
         </button>
       )}
 
       {open && (
-        <form onSubmit={submit} className="space-y-3 rounded-xl border border-ink-600 bg-ink-900/60 p-4">
+        <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-white"><ShieldCheck size={16} className="text-accent-soft" /> Submit payment details</div>
           <p className="text-xs text-slate-400">Pay exactly ${price.toFixed(0)} on Binance, then enter the transaction ID. An administrator checks it against Binance records; a screenshot alone never activates a module.</p>
           <div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlertTriangle, FlaskConical, Plug, ShieldCheck, Zap } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { SYMBOLS, callFn, decimals } from '../lib/api'
-import { DirBadge, ErrorBox, Notice, PageHeader, fmtDate, money } from '../components/ui'
+import { DirBadge, EmptyState, ErrorBox, Notice, PageHeader, Skeleton, Stat, Toast, fmtDate, money } from '../components/ui'
 
 type Mode = 'simulated' | 'live'
 interface Settings {
@@ -27,8 +27,8 @@ const DEFAULTS: Settings = {
 
 function ModeBadge({ mode }: { mode: Mode }) {
   return mode === 'live'
-    ? <span className="badge bg-sell/20 text-red-300">LIVE</span>
-    : <span className="badge bg-accent/20 text-blue-300">SIM</span>
+    ? <span className="badge bg-sell/20 text-red-300 ring-1 ring-sell/40">LIVE</span>
+    : <span className="badge bg-brand-cyan/15 text-cyan-200 ring-1 ring-brand-cyan/30">SIM</span>
 }
 
 export default function Automation() {
@@ -210,7 +210,7 @@ export default function Automation() {
 
       {/* Mode banner: always visible so simulated and live can never be confused. */}
       {settings.mode === 'live' ? (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-sell/60 bg-sell/10 p-4">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-sell/60 bg-gradient-to-r from-sell/20 to-sell/5 p-4">
           <AlertTriangle className="mt-0.5 shrink-0 text-sell-400" size={20} />
           <div>
             <div className="font-bold text-red-200">LIVE MODE: real money</div>
@@ -218,7 +218,7 @@ export default function Automation() {
           </div>
         </div>
       ) : (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-accent/50 bg-accent/10 p-4">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-brand-cyan/40 bg-gradient-to-r from-blue-600/25 to-cyan-500/10 p-4">
           <FlaskConical className="mt-0.5 shrink-0 text-accent-soft" size={20} />
           <div>
             <div className="font-bold text-blue-200">SIMULATED MODE: practice only</div>
@@ -229,20 +229,20 @@ export default function Automation() {
 
       <div className="space-y-4">
         <ErrorBox message={err} />
-        {msg && <Notice tone="ok">{msg}</Notice>}
+        <Toast message={msg} />
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card"><div className="text-xs uppercase text-slate-400">Simulated balance</div><div className="mt-1 text-xl font-bold text-white">{summary ? money(summary.simBalance) : '—'}</div></div>
-          <div className="card"><div className="text-xs uppercase text-slate-400">Live equity</div><div className="mt-1 text-xl font-bold text-white">{summary?.live ? `${summary.live.equity} ${summary.live.currency}` : '—'}</div></div>
-          <div className="card"><div className="text-xs uppercase text-slate-400">Open trades</div><div className="mt-1 text-xl font-bold text-white">{openCount}</div></div>
-          <div className="card"><div className="text-xs uppercase text-slate-400">Realised P&amp;L (sim / live est.)</div>
-            <div className="mt-1 text-xl font-bold"><span className={realised('simulated') >= 0 ? 'text-buy' : 'text-sell'}>{money(realised('simulated'))}</span> <span className="text-slate-500">/</span> <span className={realised('live') >= 0 ? 'text-buy' : 'text-sell'}>{money(realised('live'))}</span></div></div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat label="Simulated balance">{summary ? money(summary.simBalance) : <Skeleton className="mt-1 h-6 w-24" />}</Stat>
+          <Stat label="Live equity">{summary?.live ? `${summary.live.equity} ${summary.live.currency}` : '—'}</Stat>
+          <Stat label="Open trades">{openCount}</Stat>
+          <div className="card !p-3.5 sm:!p-4"><div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Realised P&amp;L (sim / live est.)</div>
+            <div className="mt-1 text-lg font-extrabold sm:text-xl"><span className={realised('simulated') >= 0 ? 'text-buy' : 'text-sell'}>{money(realised('simulated'))}</span> <span className="text-slate-500">/</span> <span className={realised('live') >= 0 ? 'text-buy' : 'text-sell'}>{money(realised('live'))}</span></div></div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Settings */}
           <div className="card space-y-4">
-            <h3 className="font-semibold text-white">Risk &amp; execution settings</h3>
+            <h3 className="font-bold text-white">Risk &amp; execution settings</h3>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="label">Lot size</label><input className="input" type="number" step="0.01" min="0.01" value={form.lot_size} onChange={(e) => setForm({ ...form, lot_size: num(e.target.value, form.lot_size) })} /></div>
               <div><label className="label">Max risk per trade (%)</label><input className="input" type="number" step="0.1" min="0.1" max="10" value={form.risk_pct} onChange={(e) => setForm({ ...form, risk_pct: num(e.target.value, form.risk_pct) })} /></div>
@@ -257,7 +257,7 @@ export default function Automation() {
               <div className="flex flex-wrap gap-2">
                 {SYMBOLS.map((s) => (
                   <button key={s} type="button" onClick={() => toggleSymbol(s)}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${form.symbols.includes(s) ? 'border-accent bg-accent/20 text-blue-200' : 'border-ink-600 text-slate-400'}`}>{s}</button>
+                    className={`chip !min-h-[40px] ${form.symbols.includes(s) ? 'chip-on' : ''}`}>{s}</button>
                 ))}
               </div>
             </div>
@@ -265,15 +265,15 @@ export default function Automation() {
               <label className="label">Trading mode</label>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setForm({ ...form, mode: 'simulated' })}
-                  className={`rounded-lg border p-3 text-left text-sm ${form.mode === 'simulated' ? 'border-accent bg-accent/15 text-blue-200' : 'border-ink-600 text-slate-400'}`}>
+                  className={`min-h-[64px] rounded-xl border p-3 text-left text-sm ${form.mode === 'simulated' ? 'border-brand-cyan/60 bg-brand-cyan/10 text-cyan-100' : 'border-white/10 text-slate-400'}`}>
                   <FlaskConical size={16} className="mb-1" /> Simulated<div className="text-xs opacity-70">Practice, no real money</div></button>
                 <button type="button" disabled={!liveReady} onClick={() => setForm({ ...form, mode: 'live' })}
-                  className={`rounded-lg border p-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${form.mode === 'live' ? 'border-sell bg-sell/15 text-red-200' : 'border-ink-600 text-slate-400'}`}>
+                  className={`min-h-[64px] rounded-xl border p-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${form.mode === 'live' ? 'border-sell bg-sell/15 text-red-200' : 'border-white/10 text-slate-400'}`}>
                   <Zap size={16} className="mb-1" /> Live<div className="text-xs opacity-70">{liveReady ? 'Real money via your broker' : 'Needs broker + consent below'}</div></button>
               </div>
             </div>
-            <label className="flex items-start gap-2 text-sm text-slate-300">
-              <input type="checkbox" className="mt-1" checked={form.auto_enabled} onChange={(e) => setForm({ ...form, auto_enabled: e.target.checked })} />
+            <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">
+              <input type="checkbox" className="switch" checked={form.auto_enabled} onChange={(e) => setForm({ ...form, auto_enabled: e.target.checked })} />
               <span>Enable auto-trading. Trades are opened automatically from signals at or above your minimum confidence, <b>only while this page is open</b>.</span>
             </label>
             <button className="btn-primary w-full" disabled={busy || form.symbols.length === 0} onClick={saveSettings}>Save settings</button>
@@ -282,7 +282,8 @@ export default function Automation() {
           <div className="space-y-4">
             {/* Broker */}
             <div className="card space-y-3">
-              <h3 className="flex items-center gap-2 font-semibold text-white"><Plug size={16} /> Broker connection (MT5 via MetaApi)</h3>
+              <h3 className="flex items-center gap-2 font-bold text-white"><Plug size={16} className="text-brand-cyan" /> Broker connection (MT5 via MetaApi)</h3>
+              <div className="flex items-center gap-2 text-sm"><span className={`h-2.5 w-2.5 rounded-full ${settings.broker_connected ? 'bg-buy-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-500'}`} /><span className={settings.broker_connected ? 'font-semibold text-green-300' : 'text-slate-400'}>{settings.broker_connected ? 'Connected' : 'Not connected'}</span></div>
               {settings.broker_connected ? (
                 <>
                   <Notice tone="ok">Broker connected. Your API token is stored encrypted on the server and is never shown again.</Notice>
@@ -304,7 +305,7 @@ export default function Automation() {
 
             {/* Consent */}
             <div className="card space-y-3">
-              <h3 className="flex items-center gap-2 font-semibold text-white"><ShieldCheck size={16} /> Live trading consent</h3>
+              <h3 className="flex items-center gap-2 font-bold text-white"><ShieldCheck size={16} className="text-brand-cyan" /> Live trading consent</h3>
               {settings.live_consent_at ? (
                 <>
                   <Notice tone="ok">Consent recorded on {fmtDate(settings.live_consent_at)}.</Notice>
@@ -312,8 +313,8 @@ export default function Automation() {
                 </>
               ) : (
                 <>
-                  <label className="flex items-start gap-2 text-sm text-slate-300">
-                    <input type="checkbox" className="mt-1" checked={ack} onChange={(e) => setAck(e.target.checked)} />
+                  <label className="flex items-start gap-3 text-sm text-slate-300">
+                    <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-cyan-400" checked={ack} onChange={(e) => setAck(e.target.checked)} />
                     <span>I understand live trading uses real money and I can lose some or all of it. I authorise ForexAI Pro to place orders on my connected broker account according to the settings I choose, and I can revoke this at any time.</span>
                   </label>
                   <button className="btn-sell" disabled={busy || !ack} onClick={() => setConsent(true)}>Record my consent</button>
@@ -324,22 +325,22 @@ export default function Automation() {
         </div>
 
         {/* Manual trade */}
-        <div className="card flex flex-wrap items-center gap-3">
-          <div className="mr-2 font-semibold text-white">Manual trade <ModeBadge mode={settings.mode} /></div>
-          <select className="input w-auto" value={manualSymbol} onChange={(e) => setManualSymbol(e.target.value)}>{SYMBOLS.map((s) => <option key={s}>{s}</option>)}</select>
+        <div className="card grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap">
+          <div className="col-span-2 mr-2 flex items-center gap-2 font-bold text-white">Manual trade <ModeBadge mode={settings.mode} /></div>
+          <select className="input col-span-2 sm:w-auto" value={manualSymbol} onChange={(e) => setManualSymbol(e.target.value)}>{SYMBOLS.map((s) => <option key={s}>{s}</option>)}</select>
           <button className="btn-buy" disabled={busy || !saved} onClick={() => placeTrade('BUY')}>BUY</button>
           <button className="btn-sell" disabled={busy || !saved} onClick={() => placeTrade('SELL')}>SELL</button>
-          {!saved && <span className="text-xs text-slate-500">Save your settings first.</span>}
+          {!saved && <span className="col-span-2 text-xs text-slate-400">Save your settings first.</span>}
         </div>
 
         {/* Open trades */}
         <div className="card p-0">
-          <div className="border-b border-ink-600/60 px-4 py-3 font-semibold text-white">Open trades {openCount > 0 && <span className="text-xs font-normal text-slate-500">· refreshed every 15s while this page is open</span>}</div>
+          <div className="border-b border-white/[0.07] px-4 py-3 font-bold text-white">Open trades {openCount > 0 && <span className="text-xs font-normal text-slate-500">· refreshed every 15s while this page is open</span>}</div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className="th">Mode</th><th className="th">Pair</th><th className="th">Side</th><th className="th">Lots</th><th className="th">Entry</th><th className="th">SL</th><th className="th">TP</th><th className="th">Price</th><th className="th">Unrealised</th><th className="th" /></tr></thead>
               <tbody>
-                {open.length === 0 && <tr><td className="td text-slate-500" colSpan={10}>No open trades.</td></tr>}
+                {open.length === 0 && <tr><td className="td" colSpan={10}><EmptyState title="No open trades" hint="Trades you open manually or via auto-trading appear here." /></td></tr>}
                 {open.map((t) => {
                   const l = live[t.id]
                   const d = decimals(t.symbol)
@@ -354,7 +355,7 @@ export default function Automation() {
                       <td className="td font-mono text-buy">{Number(t.tp).toFixed(d)}</td>
                       <td className="td font-mono">{l ? l.price.toFixed(d) : '…'}</td>
                       <td className={`td font-mono ${l && l.unrealisedUsd < 0 ? 'text-sell' : 'text-buy'}`}>{l ? money(l.unrealisedUsd) : '…'}</td>
-                      <td className="td">{t.status === 'pending' ? <span className="text-xs text-amber-300">Placing…</span> : <button className="btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={() => closeTrade(t)}>Close</button>}</td>
+                      <td className="td">{t.status === 'pending' ? <span className="text-xs text-amber-300">Placing…</span> : <button className="btn-ghost !min-h-[40px] px-3 text-xs" disabled={busy} onClick={() => closeTrade(t)}>Close</button>}</td>
                     </tr>
                   )
                 })}
@@ -365,19 +366,19 @@ export default function Automation() {
 
         {autoOn && (
           <div className="card">
-            <div className="mb-2 font-semibold text-white">Auto-trading activity</div>
+            <div className="mb-2 flex items-center gap-2 font-bold text-white"><span className="h-2 w-2 animate-pulse rounded-full bg-buy-400" />Auto-trading activity</div>
             <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs text-slate-400">{scanLog.length ? scanLog.join('\n') : 'Waiting for the first scan…'}</pre>
           </div>
         )}
 
         {/* History */}
         <div className="card p-0">
-          <div className="border-b border-ink-600/60 px-4 py-3 font-semibold text-white">Trade history</div>
+          <div className="border-b border-white/[0.07] px-4 py-3 font-bold text-white">Trade history</div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className="th">Closed</th><th className="th">Mode</th><th className="th">Pair</th><th className="th">Side</th><th className="th">Lots</th><th className="th">Entry</th><th className="th">Exit</th><th className="th">P&amp;L</th><th className="th">Reason</th></tr></thead>
               <tbody>
-                {closed.length === 0 && <tr><td className="td text-slate-500" colSpan={9}>No closed trades yet.</td></tr>}
+                {closed.length === 0 && <tr><td className="td" colSpan={9}><EmptyState title="No closed trades yet" /></td></tr>}
                 {closed.map((t) => {
                   const d = decimals(t.symbol)
                   return (

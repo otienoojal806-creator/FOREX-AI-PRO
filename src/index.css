@@ -4,18 +4,63 @@
 
 :root { color-scheme: dark; }
 html, body, #root { height: 100%; }
-body { @apply bg-ink-950 text-slate-200 antialiased; }
+@supports (height: 100dvh) { html, body, #root { height: 100dvh; } }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  @apply text-slate-200 antialiased;
+  background-color: #040a1a;
+  background-image:
+    radial-gradient(900px 480px at 85% -8%, rgba(34, 211, 238, 0.10), transparent 60%),
+    radial-gradient(800px 520px at -10% 8%, rgba(59, 130, 246, 0.16), transparent 55%);
+  background-attachment: fixed;
+  font-variant-numeric: tabular-nums;
+  overflow-x: hidden;
+}
+:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1d3566; border-radius: 8px; }
+input[type='range'] { accent-color: #22d3ee; }
 
 @layer components {
-  .card { @apply rounded-xl border border-ink-600/60 bg-ink-800/80 p-5 shadow-lg shadow-black/20; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply btn bg-accent text-white hover:bg-blue-500; }
+  .card {
+    @apply rounded-2xl border border-white/[0.07] p-4 shadow-lg shadow-black/30 sm:p-5;
+    background: linear-gradient(160deg, rgba(20, 38, 77, 0.72), rgba(8, 18, 42, 0.86));
+    backdrop-filter: blur(6px);
+  }
+  .card-glow { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18), 0 10px 40px -12px rgba(34, 211, 238, 0.25); }
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn text-white hover:brightness-110; background: linear-gradient(135deg, #2563eb, #22a7e8); box-shadow: 0 6px 20px -8px rgba(34, 167, 232, 0.7); }
   .btn-buy { @apply btn bg-buy text-ink-950 hover:brightness-110; }
   .btn-sell { @apply btn bg-sell text-white hover:brightness-110; }
-  .btn-ghost { @apply btn border border-ink-600 bg-transparent text-slate-300 hover:bg-ink-700; }
-  .input { @apply w-full rounded-lg border border-ink-600 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent focus:outline-none; }
-  .label { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400; }
+  .btn-ghost { @apply btn border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08]; }
+  .input { @apply min-h-[44px] w-full rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-base text-slate-100 placeholder:text-slate-500 focus:border-brand-cyan focus:outline-none focus:ring-1 focus:ring-brand-cyan/60 sm:text-sm; }
+  .label { @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400; }
   .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
-  .th { @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400; }
+  .th { @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400; }
   .td { @apply px-4 py-3 text-sm text-slate-200; }
+  .chip { @apply inline-flex min-h-[40px] shrink-0 items-center rounded-xl border border-white/10 bg-white/[0.03] px-3.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.08]; }
+  .chip-on { @apply border-brand-cyan/60 bg-brand-cyan/15 text-cyan-200; }
+  .scroll-x { @apply -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0; scrollbar-width: none; }
+  .scroll-x::-webkit-scrollbar { display: none; }
+  .skeleton { @apply relative overflow-hidden rounded-lg bg-white/[0.06]; }
+  .skeleton::after { content: ''; @apply absolute inset-0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent); animation: shimmer 1.4s infinite; }
 }
+
+/* Switch: a real checkbox styled as a toggle. Keeps the same input and state. */
+.switch { @apply relative inline-block h-7 w-12 shrink-0 cursor-pointer appearance-none rounded-full bg-ink-600 transition; }
+.switch::after { content: ''; @apply absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform; }
+.switch:checked { background: linear-gradient(135deg, #2563eb, #22d3ee); }
+.switch:checked::after { transform: translateX(20px); }
+
+/* Tables become stacked cards on phones. data-label is added by useResponsiveTables(). */
+@media (max-width: 767px) {
+  table.rt, table.rt tbody { display: block; width: 100%; min-width: 0 !important; }
+  table.rt thead { display: none; }
+  table.rt tr { display: block; margin: 10px; padding: 6px 4px; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; background: rgba(255, 255, 255, 0.025); }
+  table.rt td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 12px; text-align: right; border: 0 !important; overflow-wrap: anywhere; }
+  table.rt td::before { content: attr(data-label); flex: none; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #8aa0c4; }
+  table.rt td[data-label='']::before { display: none; }
+  table.rt td[colspan] { justify-content: center; text-align: center; }
+  table.rt td.whitespace-nowrap { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { MODULES, type Submission } from '../lib/types'
-import { ErrorBox, PageHeader, StatusBadge, fmtDate, money } from '../components/ui'
+import { EmptyState, ErrorBox, PageHeader, Skeleton, StatusBadge, fmtDate, money } from '../components/ui'
 
 export default function Transactions() {
   const { user } = useAuth()
@@ -35,8 +35,8 @@ export default function Transactions() {
                 <td className="td text-slate-400">{r.admin_note ?? '—'}</td>
               </tr>
             ))}
-            {rows && rows.length === 0 && <tr><td className="td text-slate-400" colSpan={6}>No payments submitted yet.</td></tr>}
-            {!rows && !err && <tr><td className="td text-slate-400" colSpan={6}>Loading…</td></tr>}
+            {rows && rows.length === 0 && <tr><td className="td" colSpan={6}><EmptyState title="No payments submitted yet" hint="Payments you submit from Wallet appear here with their verification status." /></td></tr>}
+            {!rows && !err && <tr><td className="td" colSpan={6}><Skeleton className="h-10 w-full" /></td></tr>}
           </tbody>
         </table>
       </div>

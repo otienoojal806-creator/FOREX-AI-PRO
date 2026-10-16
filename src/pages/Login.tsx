@@ -36,17 +36,17 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-full place-items-center bg-gradient-to-br from-ink-950 via-ink-900 to-ink-800 p-4">
+    <div className="grid min-h-full place-items-center overflow-y-auto p-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent/20 text-accent-soft"><Sparkles /></div>
-          <div className="text-2xl font-bold text-white">ForexAI Pro</div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl text-white shadow-lg shadow-cyan-500/30" style={{ background: 'linear-gradient(135deg,#2563eb,#22d3ee)' }}><Sparkles /></div>
+          <div><div className="text-2xl font-extrabold tracking-tight text-white">Forex<span className="text-brand-cyan">AI</span> Pro</div><div className="text-[11px] text-slate-400">AI Powered Trading System</div></div>
         </div>
-        <form onSubmit={submit} className="card space-y-4">
-          <div className="flex rounded-lg bg-ink-900 p-1 text-sm font-semibold">
+        <form onSubmit={submit} className="card card-glow space-y-4">
+          <div className="flex rounded-xl bg-ink-900/80 p-1 text-sm font-semibold">
             {(['in', 'up'] as const).map((m) => (
               <button type="button" key={m} onClick={() => { setMode(m); setErr(null); setMsg(null) }}
-                className={`flex-1 rounded-md py-2 ${mode === m ? 'bg-accent text-white' : 'text-slate-400'}`}>
+                className={`flex-1 min-h-[42px] rounded-lg py-2 transition ${mode === m ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white' : 'text-slate-400'}`}>
                 {m === 'in' ? 'Sign in' : 'Create account'}
               </button>
             ))}
