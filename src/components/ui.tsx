@@ -76,7 +76,7 @@ export function Toast({ message, tone = 'ok' }: { message: string | null; tone?:
   if (!message || !visible) return null
   const Icon = tone === 'ok' ? CheckCircle2 : AlertTriangle
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 md:bottom-6">
+    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4 md:bottom-6">
       <button type="button" onClick={() => setVisible(false)}
         className={`pointer-events-auto flex max-w-md animate-toast-in items-start gap-2 rounded-2xl border px-4 py-3 text-left text-sm font-medium shadow-2xl backdrop-blur ${tone === 'ok' ? 'border-buy/50 bg-ink-900/95 text-green-100' : 'border-sell/50 bg-ink-900/95 text-red-100'}`}>
         <Icon size={18} className={`mt-0.5 shrink-0 ${tone === 'ok' ? 'text-buy-400' : 'text-sell-400'}`} />

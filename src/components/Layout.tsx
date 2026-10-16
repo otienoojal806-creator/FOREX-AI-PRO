@@ -45,11 +45,9 @@ function Tab({ to, icon: Icon, label, locked }: { to: string; icon: typeof Activ
   return (
     <NavLink to={to} end={to === '/'} className="min-w-0 flex-1">
       {({ isActive }) => (
-        <span className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[11px] font-semibold transition ${isActive ? 'bg-brand-cyan/10 text-cyan-300' : 'text-slate-400'}`}>
-          <Icon size={21} strokeWidth={isActive ? 2.4 : 1.9} />
+        <span className={`flex min-h-[44px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold transition ${isActive ? 'bg-brand-cyan/15 text-cyan-200 ring-1 ring-brand-cyan/40' : 'text-slate-400'}`}>
+          <span className="relative"><Icon size={18} strokeWidth={isActive ? 2.4 : 1.9} />{locked && <Lock size={8} className="absolute -right-2 -top-1 text-slate-400" />}</span>
           <span className="max-w-full truncate">{label}</span>
-          {locked && <Lock size={9} className="absolute right-2 top-1.5 text-slate-500" />}
-          {isActive && <span className="absolute -top-px h-0.5 w-8 rounded-full bg-brand-cyan" />}
         </span>
       )}
     </NavLink>
@@ -116,20 +114,21 @@ export default function Layout() {
         )}
       </header>
 
-      <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="mx-auto max-w-6xl p-4 pb-8 md:p-8">
-          <div key={pathname} className="animate-fade-up"><Outlet /></div>
-        </div>
-      </main>
-
-      {/* Mobile bottom navigation */}
-      <nav aria-label="Primary" className="z-30 flex shrink-0 items-stretch gap-1 border-t border-white/[0.08] bg-ink-900/95 px-2 pt-1.5 backdrop-blur md:hidden" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
+      {/* Mobile tab navigation (top, so floating host overlays at the bottom never cover it) */}
+      <nav aria-label="Primary" className="z-20 flex shrink-0 items-stretch gap-1 border-b border-white/[0.08] bg-ink-900/90 px-2 py-1.5 backdrop-blur md:hidden">
         <Tab to="/" icon={LayoutDashboard} label="Home" />
         <Tab to="/analysis" icon={Activity} label="AI Analysis" locked={!hasModule('ai_analysis')} />
         <Tab to="/automation" icon={Bot} label="Automation" locked={!hasModule('auto_trading')} />
         <Tab to="/billing" icon={Wallet} label="Wallet" />
         <Tab to="/settings" icon={User} label="Profile" />
       </nav>
+
+      <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="mx-auto max-w-6xl p-4 pb-24 md:p-8">
+          <div key={pathname} className="animate-fade-up"><Outlet /></div>
+        </div>
+      </main>
+
     </div>
   )
 }
