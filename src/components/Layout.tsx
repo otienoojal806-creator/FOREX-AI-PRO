@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Activity, Bot, CreditCard, LayoutDashboard, Lock, LogOut, Receipt, Settings, Shield, Sparkles, User, Wallet, X } from 'lucide-react'
+import { Activity, Bot, Crosshair, CreditCard, LayoutDashboard, Lock, LogOut, Receipt, Settings, Shield, Sparkles, User, Wallet, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 
 // Presentation only: labels each table cell with its column header so tables can stack as cards on phones.
@@ -82,6 +82,7 @@ export default function Layout() {
           <Item to="/" icon={LayoutDashboard} label="Dashboard" />
           <Item to="/analysis" icon={Activity} label="AI Analysis" locked={!hasModule('ai_analysis')} />
           <Item to="/automation" icon={Bot} label="Trade Automation" locked={!hasModule('auto_trading')} />
+          <Item to="/scalper" icon={Crosshair} label="MT5 Scalper" locked={!hasModule('auto_trading')} />
           <Item to="/billing" icon={CreditCard} label="Modules & Billing" />
           <Item to="/transactions" icon={Receipt} label="Transactions" />
           <Item to="/settings" icon={Settings} label="Account" />
@@ -117,8 +118,9 @@ export default function Layout() {
       {/* Mobile tab navigation (top, so floating host overlays at the bottom never cover it) */}
       <nav aria-label="Primary" className="z-20 flex shrink-0 items-stretch gap-1 border-b border-white/[0.08] bg-ink-900/90 px-2 py-1.5 backdrop-blur md:hidden">
         <Tab to="/" icon={LayoutDashboard} label="Home" />
-        <Tab to="/analysis" icon={Activity} label="AI Analysis" locked={!hasModule('ai_analysis')} />
+        <Tab to="/analysis" icon={Activity} label="Analysis" locked={!hasModule('ai_analysis')} />
         <Tab to="/automation" icon={Bot} label="Automation" locked={!hasModule('auto_trading')} />
+        <Tab to="/scalper" icon={Crosshair} label="Scalper" locked={!hasModule('auto_trading')} />
         <Tab to="/billing" icon={Wallet} label="Wallet" />
         <Tab to="/settings" icon={User} label="Profile" />
       </nav>

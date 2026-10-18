@@ -2,3 +2,9 @@ node_modules
 dist
 .env
 .netlify
+__pycache__/
+*.pyc
+engine/state/
+engine/.env
+engine/.venv/
+.pytest_cache/

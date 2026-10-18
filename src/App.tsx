@@ -8,6 +8,7 @@ import Transactions from './pages/Transactions'
 import Account from './pages/Account'
 import AIAnalysis from './pages/AIAnalysis'
 import Automation from './pages/Automation'
+import Scalper from './pages/Scalper'
 import Admin from './pages/admin/Admin'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
           </Route>
           <Route element={<RequireModule module="auto_trading" />}>
             <Route path="automation" element={<Automation />} />
+            <Route path="scalper" element={<Scalper />} />
           </Route>
           <Route element={<RequireAdmin />}>
             <Route path="admin" element={<Admin />} />

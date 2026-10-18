@@ -1,0 +1,2 @@
+# Tests run with the standard library (python -m unittest). pytest is optional and also works.
+pytest>=8.0

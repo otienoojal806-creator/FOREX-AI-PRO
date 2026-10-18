@@ -1,0 +1,3 @@
+# The engine itself is standard-library only. The MetaTrader5 package is Windows-only and talks to the
+# MT5 desktop terminal that must be installed and logged in on the same machine.
+MetaTrader5>=5.0.45
